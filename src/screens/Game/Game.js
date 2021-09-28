@@ -5,6 +5,8 @@ import {
     StyleSheet
 } from 'react-native';
 import Chess from './Chess';
+import uuid from 'react-native-uuid';
+import MQTT from 'sp-react-native-mqtt';
 
 // Screens
 import { Menu } from '../../screens';
@@ -14,8 +16,15 @@ import { menuBackground, SIZES } from '../../constants';
 
 // Utilities
 import { isEqual } from '../../util';
+import PlayerBanner from './PlayerBanner';
 
-const Game = () => {
+// MQTT
+const MQTT_SERVER = 'broker.emqx.io';
+const MQTT_PORT = 1883;
+const MQTT_CLIENT_ID = uuid.v4();
+const MQTT_TOPIC = '/NGAME/taser';
+
+const Game = ({ resetGame }) => {
     // States
     const [board, setBoard] = useState([
         [0, -1, 0, -1, 0, -1, 0, -1],
@@ -34,23 +43,88 @@ const Game = () => {
     const [movePoints, setMovePoints] = useState(null);
     const [mustForce, setMustForce] = useState(false);
     const [isMove, setIsMove] = useState(false);
+    const [playerWin, setPlayerWin] = useState(null);
+    const [playerOneChessCount, setPlayerOneChessCount] = useState(8);
+    const [playerTwoChessCount, setPlayerTwoChessCount] = useState(8);
+
+    const [client, setClient] = useState(null);
 
     // Life Cycle
     useEffect(() => {
+        checkWinner();
+
+        if (playerWin === 1) {
+            client.publish(MQTT_TOPIC, 'P2', 0, false);
+            onResetGame();
+        } else if (playerWin === -1) {
+            client.publish(MQTT_TOPIC, 'P1', 0, false);
+            onResetGame();
+        }
+
+        // MQTT Connection
+        if (client === null) {
+            initialMqtt(MQTT_SERVER, MQTT_PORT, MQTT_CLIENT_ID);
+        }
+
+        // Check every turn
         if (!isMove) {
-            console.log(`isMove = false`);
             isForce();
         } else if (isMove) {
-            console.log(`isMove = true`);
             let isIsForce = isForce();
-            console.log(`isIsForce = ${isIsForce}`);
             setIsMove(false);
             if (!isIsForce) {
                 setCurrentPlayer(-1 * currentPlayer);
             }
         }
-        console.log();
     }, [currentPlayer, isMove]);
+
+    // Reset game
+    function onResetGame() {
+        setTimeout(() => {
+            client.disconnect();
+            setClient(null);
+            resetGame();
+        }, 5000);
+    }
+
+    // Get winner
+    function checkWinner() {
+        if (playerOneChessCount === 0) {
+            setPlayerWin(-1);
+        } else if (playerTwoChessCount === 0) {
+            setPlayerWin(1);
+        }
+    }
+
+    // Initial MQTT Connection
+    function initialMqtt(uri, port, clientId) {
+        MQTT.createClient({
+            uri: `mqtt://${uri}:${port}`,
+            clientId
+        }).then((client) => {
+            client.on('closed', () => {
+                console.log('mqtt.event.closed');
+            });
+
+            client.on('error', (msg) => {
+                console.log('mqtt.event.error', msg);
+            });
+
+            client.on('message', (msg) => {
+                console.log('mqtt.event.message', msg);
+            });
+
+            client.on('connect', () => {
+                console.log('connected');
+                client.subscribe(MQTT_TOPIC, 0);
+                setClient(client);
+            });
+
+            client.connect();
+        }).catch((error) => {
+            console.log(error);
+        });
+    }
 
     // Suggest ways when user want to move
     function preMove(coordinate, value = 1) {
@@ -101,7 +175,6 @@ const Game = () => {
                     }
                 } else if (board[row][column] === (2 * currentPlayer)) {
                     let isIsForceKing = isForceKing({ row, column });
-                    console.log('isIsForceKing', isIsForceKing);
                     return isIsForceKing;
                 }
             }
@@ -120,13 +193,9 @@ const Game = () => {
 
         let boolValue = false;
 
-        console.log('TL');
         findCurrentToTopLeft(row, column);
-        console.log('TR');
         findCurrentToTopRight(row, column);
-        console.log('BL');
         findCurrentToBottomLeft(row, column);
-        console.log('BR');
         findCurrentToBottomRight(row, column);
 
         if (value === (2 * currentPlayer)) {
@@ -145,7 +214,6 @@ const Game = () => {
             if (isOutOfArray(row - 1, column - 1)) return;
 
             let target = board[row - 1][column - 1];
-            console.log(`value: ${target}`, row - 1, column - 1)
 
             if (!isFound) {
                 if (target === 0) {
@@ -166,7 +234,6 @@ const Game = () => {
                         return;
                     }
                     setMustForce(true);
-                    console.log(`MustForce TL`);
                     boolValue = true;
                     return;
                 }
@@ -177,7 +244,6 @@ const Game = () => {
             if (isOutOfArray(row - 1, column + 1)) return;
 
             let target = board[row - 1][column + 1];
-            console.log(`value: ${target}`, row - 1, column + 1)
 
             if (!isFound) {
                 if (target === 0) {
@@ -198,7 +264,6 @@ const Game = () => {
                         return;
                     }
                     setMustForce(true);
-                    console.log(`MustForce TR`);
                     boolValue = true;
                     return;
                 }
@@ -209,7 +274,6 @@ const Game = () => {
             if (isOutOfArray(row + 1, column - 1)) return;
 
             let target = board[row + 1][column - 1];
-            console.log(`value: ${target}`, row + 1, column - 1)
 
             if (!isFound) {
                 if (target === 0) {
@@ -230,7 +294,6 @@ const Game = () => {
                         return;
                     }
                     setMustForce(true);
-                    console.log(`MustForce BL`);
                     boolValue = true;
                     return;
                 }
@@ -241,7 +304,6 @@ const Game = () => {
             if (isOutOfArray(row + 1, column + 1)) return;
 
             let target = board[row + 1][column + 1];
-            console.log(`value: ${target}`, row + 1, column + 1);
 
             if (!isFound) {
                 if (target === 0) {
@@ -262,7 +324,6 @@ const Game = () => {
                         return;
                     }
                     setMustForce(true);
-                    console.log(`MustForce BR`);
                     boolValue = true;
                     return;
                 }
@@ -321,7 +382,7 @@ const Game = () => {
     }
 
     // When user decide to move
-    function executeMove({ row, column }, value = 1) {
+    function executeMove({ row, column }) {
         const { row: currRow, column: currColumn } = currentChess;
         let chessValue = board[currRow][currColumn];
 
@@ -347,6 +408,12 @@ const Game = () => {
                     setForcePoints(null);
                     setWillForcedChesses(null);
                     setIsMove(true);
+
+                    if (currentPlayer === 1) {
+                        setPlayerTwoChessCount(prevCount => prevCount - 1);
+                    } else {
+                        setPlayerOneChessCount(prevCount => prevCount - 1);
+                    }
                 }
             }
         } else if (willForcedChesses === null) {
@@ -433,13 +500,19 @@ const Game = () => {
                             blurRadius={7}
                         />
                         <View style={styles.playerTwoBox}>
-
+                            <PlayerBanner
+                                player={2}
+                                playerChessCount={playerTwoChessCount}
+                            />
                         </View>
                         <View style={styles.board}>
                             {renderBoard()}
                         </View>
                         <View style={styles.playerOneBox}>
-
+                            <PlayerBanner
+                                player={1}
+                                playerChessCount={playerOneChessCount}
+                            />
                         </View>
                     </View>
                     : <Menu
@@ -472,14 +545,23 @@ const styles = StyleSheet.create({
     },
     playerOneBox: {
         flex: 1,
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
         borderTopWidth: 15,
         borderColor: '#54493f'
 
     },
     playerTwoBox: {
         flex: 1,
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
         borderBottomWidth: 15,
-        borderColor: '#54493f'
+        borderColor: '#54493f',
+        transform: [
+            { rotate: '180deg' }
+        ]
     }
 });
 

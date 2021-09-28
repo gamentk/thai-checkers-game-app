@@ -79,7 +79,7 @@ const Chess = (props) => {
                 <TouchableWithoutFeedback
                     onPress={onPressMove}
                 >
-                    <View style={[styles.container, { backgroundColor: (currentPlayer === 1) ? '#ed1212' : '#2626d6', opacity: 0.3 }]}>
+                    <View style={[styles.container, { backgroundColor: (currentPlayer === 1) ? '#ED1212' : '#2626D6', opacity: 0.3 }]}>
                     </View>
                 </TouchableWithoutFeedback>
             }

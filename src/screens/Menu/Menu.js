@@ -58,11 +58,11 @@ const Menu = (props) => {
             />
             <View style={styles.menuLogo}>
                 <Text style={{ ...FONTS.bold, color: '#B11B1B', fontSize: 36 }}>PISADAN EDITION</Text>
-                <Text style={{ ...FONTS.bold, color: '#B11B1B', fontSize: 26 }}>รอดหรือตาย นายเลือกเอง</Text>
+                <Text style={{ ...FONTS.bold, color: '#B11B1B', fontSize: 26 }}>อยู่หรือตาย นายเลือกเอง</Text>
             </View>
             {(randomNumber) && <View style={styles.randomNumber}>
                 <Text style={{ ...FONTS.regular, color: '#FFF', fontSize: 30 }}>Player</Text>
-                <Text style={{ ...FONTS.regular, color: '#FFF', fontSize: 64, color: (randomNumber === 1) ? '#ed1212' : '#2626d6' }}>{randomNumber}</Text>
+                <Text style={{ ...FONTS.regular, color: '#FFF', fontSize: 64, color: (randomNumber === '...') ? '#FFF' : (randomNumber === 1) ? '#ed1212' : '#2626d6' }}>{randomNumber}</Text>
                 <Text style={{ ...FONTS.regular, color: '#FFF', fontSize: 30 }}>First</Text>
             </View>}
             <TouchableOpacity
@@ -102,7 +102,7 @@ const styles = StyleSheet.create({
         bottom: '30%',
         right: 25,
         paddingLeft: 20,
-        borderStartWidth: 1,
+        borderStartWidth: 3,
         borderColor: 'white'
     },
     randomNumber: {

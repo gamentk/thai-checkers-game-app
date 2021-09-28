@@ -12,6 +12,8 @@ target 'CheckersApp' do
     :hermes_enabled => false
   )
 
+  pod 'sp-react-native-mqtt', :path => '../node_modules/sp-react-native-mqtt'
+
   target 'CheckersAppTests' do
     inherit! :complete
     # Pods for testing

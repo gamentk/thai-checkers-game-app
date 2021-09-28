@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import {
     View,
+    Image,
     StyleSheet
 } from 'react-native';
 import Chess from './Chess';
 
+// Screens
+import { Menu } from '../../screens';
+
 // Theme
-import { SIZES } from '../../constants';
+import { menuBackground, SIZES } from '../../constants';
 
 // Utilities
 import { isEqual } from '../../util';
@@ -23,7 +27,7 @@ const Game = () => {
         [0, 1, 0, 1, 0, 1, 0, 1],
         [1, 0, 1, 0, 1, 0, 1, 0]
     ]);
-    const [currentPlayer, setCurrentPlayer] = useState(1);
+    const [currentPlayer, setCurrentPlayer] = useState(null);
     const [currentChess, setCurrentChess] = useState(null);
     const [forcePoints, setForcePoints] = useState(null);
     const [willForcedChesses, setWillForcedChesses] = useState(null);
@@ -383,7 +387,7 @@ const Game = () => {
                 return (
                     <View
                         key={`chess-${columnIndex}`}
-                        style={[styles.chess, { backgroundColor: layoutColor }]}
+                        style={[styles.square, { backgroundColor: layoutColor }]}
                     >
                         <Chess
                             currentPlayer={currentPlayer}
@@ -417,17 +421,32 @@ const Game = () => {
 
     // Entry point
     return (
-        <View style={styles.container}>
-            <View style={styles.playerTwoBox}>
+        <>
+            {
+                (currentPlayer)
+                    ? <View style={styles.container}>
+                        <Image
+                            source={menuBackground}
+                            style={{
+                                position: 'absolute'
+                            }}
+                            blurRadius={7}
+                        />
+                        <View style={styles.playerTwoBox}>
 
-            </View>
-            <View style={styles.board}>
-                {renderBoard()}
-            </View>
-            <View style={styles.playerOneBox}>
+                        </View>
+                        <View style={styles.board}>
+                            {renderBoard()}
+                        </View>
+                        <View style={styles.playerOneBox}>
 
-            </View>
-        </View>
+                        </View>
+                    </View>
+                    : <Menu
+                        setCurrentPlayer={setCurrentPlayer}
+                    />
+            }
+        </>
     );
 }
 
@@ -446,7 +465,7 @@ const styles = StyleSheet.create({
         flex: 1,
         flexDirection: 'row',
     },
-    chess: {
+    square: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center'

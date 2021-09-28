@@ -93,7 +93,9 @@ const styles = StyleSheet.create({
         height: '90%',
         borderRadius: 50,
         justifyContent: 'center',
-        alignItems: 'center'
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#111'
     },
     value: {
         color: '#FFF',

@@ -1,5 +1,10 @@
-import { SIZES } from './Theme';
+import { SIZES, FONTS } from './Theme';
+import { menuBackground, menuLogo } from './Images';
 
 export {
-    SIZES
+    SIZES,
+    FONTS,
+
+    menuBackground,
+    menuLogo
 }
